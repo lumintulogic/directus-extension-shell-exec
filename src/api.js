@@ -1,19 +1,36 @@
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
+
+function run(command, options, output) {
+  	return new Promise((resolve, reject) => {
+		
+		exec(command,options,(err,stdout)=>{
+			if (err) {
+				return reject(err);
+			}
+			
+			switch(output){
+				case "JSON":
+					resolve(JSON.parse(stdout.toString()));
+				case "plainText":
+					resolve(stdout.toString());
+				case "Text":	
+					resolve(stdout.toString().replace(/\s/g,''));
+			} 
+
+		});
+
+	});
+};
 
 export default {
 	id: 'lumintulogic-shell-exec',
-	handler: function ({directory,command,output}){
-		const res = execSync(command,{
-			cwd: (directory !== undefined ? directory : "./")
-		}).toString();
-		
-		switch(output){
-			case "JSON":
-				return JSON.parse(res);
-			case "plainText":
-				return res;
-			case "Text":	
-				return res.replace(/\s/g,'');
-		} 
+	handler: async function ({directory,command,output}){
+		try{
+			return await run(command,{
+				cwd: (directory !== undefined ? directory : "./")
+			},output);
+		} catch (err){
+			throw new Error(err);
+		}
 	}
 };
